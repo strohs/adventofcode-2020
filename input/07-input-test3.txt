@@ -1,0 +1,4 @@
+shiny gold bags contain 1 cool cyan bag, 1 awesome aqua bag.
+cool cyan bags contain 1 good green bag.
+good green bags contain no other bags.
+awesome aqua bags contain no other bags.
