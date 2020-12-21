@@ -7,8 +7,8 @@ use std::io;
 use std::fs::File;
 use std::io::BufRead;
 
+/// Ins represents all the possible Instructions for this challenge
 #[derive(Debug, Copy, Clone)]
-/// All the possible Instructions
 enum Ins {
     ACC(i32),
     JMP(i32),
@@ -29,7 +29,7 @@ impl Ins {
         match ins {
             Ins::NOP(amt) => Ins::JMP(*amt),
             Ins::JMP(amt) => Ins::NOP(*amt),
-            Ins::ACC(amt) => *ins,
+            Ins::ACC(_amt) => *ins,
         }
     }
 
@@ -87,7 +87,7 @@ fn ins_indices(ins: &Vec<Ins>) -> Option<Vec<usize>> {
             ins_hist.push(cidx);
         }
         match ins[cidx] {
-            Ins::ACC(amt) => {
+            Ins::ACC(_amt) => {
                 cidx += 1;
             },
             Ins::JMP(amt) => {
