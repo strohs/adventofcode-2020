@@ -1,3 +1,6 @@
+/// Advent of Code - Day 9 - Encoding Error
+/// https://adventofcode.com/2020/day/9
+
 use std::fs::File;
 use std::io;
 use std::io::BufRead;
@@ -5,9 +8,6 @@ use std::collections::HashMap;
 use num_traits::PrimInt;
 use std::hash::Hash;
 
-
-/// Advent of Code - Day 9 - Encoding Error
-/// https://adventofcode.com/2020/day/9
 
 /// parse input file into a Vector of integers
 fn parse_input(filename: &str) -> Vec<i64> {
@@ -37,11 +37,13 @@ where T: PrimInt + Hash
     res
 }
 
+#[allow(dead_code)]
 fn valid_pair<T: PrimInt>(pair: &(T, T)) -> bool {
     let (p1, p2) = pair;
     *p1 != *p2
 }
 
+#[allow(dead_code)]
 fn part_one(nums: Vec<i64>) -> Option<i64> {
 
     for n in 25..nums.len() {
