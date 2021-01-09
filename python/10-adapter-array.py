@@ -74,6 +74,48 @@ def append_indices(adapters, indices):
             adapters.append(i)
 
 
+def ways(i, adapters):
+    """
+    returns a count of the number of ways to get to the adapter at index i from the 3 adapters preceding it.
+    """
+    if i < 0:
+        return 0
+    if i == 0:
+        return 1
+
+    total_ways = 0
+
+    if i == 1:
+        n1 = adapters[i] - adapters[i - 1]
+        if n1 <= 3:
+            total_ways += 1
+        if adapters[i] <= 3:
+            total_ways += 1
+
+    elif i == 2:
+        n1 = adapters[i] - adapters[i - 1]
+        n2 = adapters[i] - adapters[i - 2]
+        if n1 <= 3:
+            total_ways += 1
+        if n2 <= 3:
+            total_ways += 1
+        if adapters[i] <= 3:
+            total_ways += 1
+
+    else:
+        n1 = adapters[i] - adapters[i - 1]
+        n2 = adapters[i] - adapters[i - 2]
+        n3 = adapters[i] - adapters[i - 3]
+        if n1 <= 3:
+            total_ways += 1
+        if n2 <= 3:
+            total_ways += 1
+        if n3 <= 3:
+            total_ways += 1
+
+    return total_ways
+
+
 def part_two():
     """
     determine the total number of distinct ways you can arrange the adapters to connect the charging outlet to
@@ -81,49 +123,34 @@ def part_two():
     :return:
     """
     adapters = parse_input("../input/10-input.txt")
-    adapters = sorted([0,16,10,15,5,1,11,7,19,6,12,4, 22])
-    # adapters = sorted([0,1,2,3,4,7])
+    # adapters = sorted([16,10,15,5,1,11,7,19,6,12,4])
+    adapters = sorted([1,2,3,4])
     print(adapters)
-    counts = []
-    to_visit = []
-    next_indices = next_valid_indices(adapters, 0)
-    print(f"0 -> {next_indices}")
-    counts.append(len(next_indices))
-    append_indices(to_visit, next_indices)
-    while len(to_visit) > 0:
-        nidx = to_visit.pop(0)
-        next_indices = next_valid_indices(adapters, nidx)
-        print(f"{nidx} -> {next_indices}")
-        counts.append(len(next_indices))
-        append_indices(to_visit, next_indices)
-
-    print(f"final counts  {counts}")
-    print(f"total number of distinct ways to arrange adapters: {sum(counts)}")
+    tot = 0
+    for i in range(len(adapters)):
+        cur = ways(i, adapters)
+        print(f"index {i}  ways {cur}")
+        tot += cur
+    print(f"total number of distinct ways to arrange adapters: {tot}")
 
 
-part_two()
-# 0  (0,1  0,2  0,3)
-#  1  (1,2  1,3, 1,4)
-#   2  (2,3  2,4)
-#    3  (3,4)
 
 
-# 0,1,2,3,4,7
-# 0,1,3,4,7
-# 0,1,2,4,7
-# 0,2,3,4,7
-# 0,1,4,7
-# 0,3,4,7
-# 0,2,4,7
+def part_two_plus():
+    # jolts = parse_input("../input/10-input.txt")
+    jolts = sorted([16,10,15,5,1,11,7,19,6,12,4])
+    jolts.insert(0, 0)
+    jolts.append(jolts[-1] + 3)
+    print(jolts)
+    joltMap = {jolts[-2] : 1, jolts[-3] : 1}
+    for i in range(len(jolts) - 4, -1, -1):
+        combos = joltMap[jolts[i+1]] #You know the next adapter will fit
+        if jolts[i+3] - jolts[i] <= 3:
+            combos += joltMap[jolts[i+2]] + joltMap[jolts[i+3]]
+        elif jolts[i+2] - jolts[i] <= 3:
+            combos += joltMap[jolts[i+2]]
+        joltMap[jolts[i]] = combos
+    print(joltMap[0])
 
 
-## 0,1,2,3
-# 0    (0,1  0,2  0,3)
-#  1   (1,2  1,3)
-#   2  (2,3)
-#    3 ()
-#
-# 0,1,2,3
-# 0,2,3
-# 0,1,3
-# 0,3
+part_two_plus()
