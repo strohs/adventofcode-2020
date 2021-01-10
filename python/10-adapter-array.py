@@ -52,68 +52,23 @@ def part_one():
 
 # part 2 functions start here
 
-def next_valid_indices(adapters, sidx):
+
+def connectable_indices(i, adapters):
     """
-    looks at the next 3 (i.e. tolerance) adapters and returns the indices of the adapters that are within
-    the tolerance
+    returns a list of the indices that can be "connected" to from index i in adapters. This function will check
+     indices i + 1, i + 2, and i + 3 to see if they are within a 3 voltage difference from adapters[i]
     """
-    valid = []
-    for (i, adapter) in enumerate(adapters[sidx + 1: sidx + 1 + tolerance]):
-        if adapter - adapters[sidx] <= tolerance:
-            valid.append(sidx + 1 + i)
-    return valid
 
+    indices = []
 
-def append_indices(adapters, indices):
-    """
-    append the list of indices to adapters, but only of the index is not already in adapters. Adapters must
-    already be sorted in ascending order
-    """
-    for i in indices:
-        if i not in adapters:
-            adapters.append(i)
+    if i < len(adapters) - 1 and adapters[i + 1] - adapters[i] <= 3:
+        indices.append(i + 1)
+    if i < len(adapters) - 2 and adapters[i + 2] - adapters[i] <= 3:
+        indices.append(i + 2)
+    if i < len(adapters) - 3 and adapters[i + 3] - adapters[i] <= 3:
+        indices.append(i + 3)
 
-
-def ways(i, adapters):
-    """
-    returns a count of the number of ways to get to the adapter at index i from the 3 adapters preceding it.
-    """
-    if i < 0:
-        return 0
-    if i == 0:
-        return 1
-
-    total_ways = 0
-
-    if i == 1:
-        n1 = adapters[i] - adapters[i - 1]
-        if n1 <= 3:
-            total_ways += 1
-        if adapters[i] <= 3:
-            total_ways += 1
-
-    elif i == 2:
-        n1 = adapters[i] - adapters[i - 1]
-        n2 = adapters[i] - adapters[i - 2]
-        if n1 <= 3:
-            total_ways += 1
-        if n2 <= 3:
-            total_ways += 1
-        if adapters[i] <= 3:
-            total_ways += 1
-
-    else:
-        n1 = adapters[i] - adapters[i - 1]
-        n2 = adapters[i] - adapters[i - 2]
-        n3 = adapters[i] - adapters[i - 3]
-        if n1 <= 3:
-            total_ways += 1
-        if n2 <= 3:
-            total_ways += 1
-        if n3 <= 3:
-            total_ways += 1
-
-    return total_ways
+    return indices
 
 
 def part_two():
@@ -123,34 +78,26 @@ def part_two():
     :return:
     """
     adapters = parse_input("../input/10-input.txt")
-    # adapters = sorted([16,10,15,5,1,11,7,19,6,12,4])
-    adapters = sorted([1,2,3,4])
-    print(adapters)
-    tot = 0
-    for i in range(len(adapters)):
-        cur = ways(i, adapters)
-        print(f"index {i}  ways {cur}")
-        tot += cur
-    print(f"total number of distinct ways to arrange adapters: {tot}")
+    adapters = sorted(adapters)
+    # insert a 0 element at the start of adapters to represent the starting connection
+    adapters.insert(0, 0)
+
+    # counts is a list that keeps a running count of the total number of ways to connect the adapters at index i
+    # to the end of the adapter list.
+    # count will be prefilled with zeros, and the last element of count will be defaulted to 1
+    counts = [0] * len(adapters)
+    counts[-1] = 1
+
+    # work backwards in adapters, starting from the last adapter, and keeping a running count of the number of ways
+    # that adapters[i] can be connected to the last adapter. We're starting from the second to last element of adapters
+    # since there is always only one way to connect to the last adapter
+    for i in range(len(adapters) - 2, -1, -1):
+        cis = connectable_indices(i, adapters)
+        path_count = sum(map(lambda ci: counts[ci], cis))
+        counts[i] = path_count
+
+    print(counts)
+    print(f"total number of distinct ways to arrange adapters: {counts[0]}")
 
 
-
-
-def part_two_plus():
-    # jolts = parse_input("../input/10-input.txt")
-    jolts = sorted([16,10,15,5,1,11,7,19,6,12,4])
-    jolts.insert(0, 0)
-    jolts.append(jolts[-1] + 3)
-    print(jolts)
-    joltMap = {jolts[-2] : 1, jolts[-3] : 1}
-    for i in range(len(jolts) - 4, -1, -1):
-        combos = joltMap[jolts[i+1]] #You know the next adapter will fit
-        if jolts[i+3] - jolts[i] <= 3:
-            combos += joltMap[jolts[i+2]] + joltMap[jolts[i+3]]
-        elif jolts[i+2] - jolts[i] <= 3:
-            combos += joltMap[jolts[i+2]]
-        joltMap[jolts[i]] = combos
-    print(joltMap[0])
-
-
-part_two_plus()
+part_two()
