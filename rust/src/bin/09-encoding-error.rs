@@ -1,17 +1,14 @@
+use num_traits::PrimInt;
+use std::collections::HashMap;
 /// Advent of Code - Day 9 - Encoding Error
 /// https://adventofcode.com/2020/day/9
-
 use std::fs::File;
+use std::hash::Hash;
 use std::io;
 use std::io::BufRead;
-use std::collections::HashMap;
-use num_traits::PrimInt;
-use std::hash::Hash;
-
 
 /// parse input file into a Vector of integers
 fn parse_input(filename: &str) -> Vec<i64> {
-
     let file = File::open(filename).unwrap();
     io::BufReader::new(file)
         .lines()
@@ -23,14 +20,15 @@ fn parse_input(filename: &str) -> Vec<i64> {
 /// v - the vector of integers
 /// sum - the target sum
 fn two_sum<T>(v: &[T], sum: T) -> Vec<(T, T)>
-where T: PrimInt + Hash
+where
+    T: PrimInt + Hash,
 {
     let mut imap = HashMap::new();
     let mut res = Vec::new();
     for i in v {
         let target = sum - *i;
-        if imap.contains_key(&target ) {
-            res.push( (*i, target));
+        if imap.contains_key(&target) {
+            res.push((*i, target));
         }
         imap.entry(*i).or_insert(*i);
     }
@@ -45,21 +43,20 @@ fn valid_pair<T: PrimInt>(pair: &(T, T)) -> bool {
 
 #[allow(dead_code)]
 fn part_one(nums: Vec<i64>) -> Option<i64> {
-
     for n in 25..nums.len() {
         let sum_pairs = two_sum(&nums[(n - 25)..n], nums[n]);
-        let valid_pairs: Vec<&(i64, i64)> = sum_pairs
-            .iter()
-            .filter(|&pair| valid_pair(pair))
-            .collect();
+        let valid_pairs: Vec<&(i64, i64)> =
+            sum_pairs.iter().filter(|&pair| valid_pair(pair)).collect();
         if valid_pairs.is_empty() {
-            println!("{} does not have two previous numbers that sum to it", &nums[n]);
+            println!(
+                "{} does not have two previous numbers that sum to it",
+                &nums[n]
+            );
             return Some(nums[n]);
         }
     }
     None
 }
-
 
 // part 2 functions start here
 
@@ -75,8 +72,11 @@ fn part_two(nums: Vec<i64>, target: i64) -> Option<Vec<i64>> {
             if *slice.last().unwrap() < target {
                 if slice.iter().sum::<i64>() == target {
                     let enc_weak = slice.first().unwrap() + slice.last().unwrap();
-                    println!("encryption weakness = {} from elements {:?}", &enc_weak, &slice);
-                    return Some(slice)
+                    println!(
+                        "encryption weakness = {} from elements {:?}",
+                        &enc_weak, &slice
+                    );
+                    return Some(slice);
                 }
             }
         }

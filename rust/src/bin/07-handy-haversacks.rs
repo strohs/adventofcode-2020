@@ -3,12 +3,12 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::io;
-use std::fs::File;
-use std::path::Path;
-use std::io::BufRead;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
 use std::hash::{Hash, Hasher};
+use std::io;
+use std::io::BufRead;
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 struct Bag {
@@ -40,13 +40,10 @@ impl Hash for Bag {
     }
 }
 
-
-
-
 /// returns an iterator over the lines of the file pointed to by filename
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-    where
-        P: AsRef<Path>,
+where
+    P: AsRef<Path>,
 {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
@@ -54,8 +51,7 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 
 fn parse_container_bag(line: &str) -> Bag {
     lazy_static! {
-        static ref CONTAINER_RE: Regex =
-            Regex::new(r"(.+?) bag[s]?").expect("valid RegEx");
+        static ref CONTAINER_RE: Regex = Regex::new(r"(.+?) bag[s]?").expect("valid RegEx");
     }
     // get the container bag name
     let container: String = CONTAINER_RE.captures(line).unwrap()[1].to_string();
@@ -67,9 +63,10 @@ fn parse_contained_bags(line: &str) -> Option<Vec<Bag>> {
         static ref BAGS_RE: Regex = Regex::new(r"(\d+) (.+?) bag[s]?").expect("valid regex");
     }
     if line.find("no other").is_some() {
-        return None
+        return None;
     }
-    let bags = BAGS_RE.captures_iter(line)
+    let bags = BAGS_RE
+        .captures_iter(line)
         .map(|cap| {
             let amount: i32 = cap[1].parse().expect("valid integer for bag amount");
             let name: String = cap[2].to_string();
@@ -103,7 +100,11 @@ fn part_one() {
 
     // now determine the count of bags that can contain at least one 'shiny gold' bag
     //
-    let mut bags_to_visit = bag_map.get("shiny gold").unwrap().iter().collect::<Vec<&Bag>>();
+    let mut bags_to_visit = bag_map
+        .get("shiny gold")
+        .unwrap()
+        .iter()
+        .collect::<Vec<&Bag>>();
     let mut containing_bags: HashSet<&str> = bags_to_visit.iter().map(|&b| &*b.name).collect();
     while !bags_to_visit.is_empty() {
         let next = bags_to_visit.pop().unwrap();
@@ -114,10 +115,12 @@ fn part_one() {
                 bags_to_visit.push(b);
             }
         }
-
     }
     //dbg!(&containing_bags);
-    println!("bag colors that can eventually contain at least one shiny gold bag = {}", &containing_bags.len());
+    println!(
+        "bag colors that can eventually contain at least one shiny gold bag = {}",
+        &containing_bags.len()
+    );
 }
 
 // parse the input file into a HashMap
@@ -153,7 +156,9 @@ fn part_two() {
     let bags = parse_input("../input/07-input.txt");
 
     // now determine the count of individual bags required inside a 'shiny gold' bag
-    let (bag, _) = bags.get_key_value(&Bag::new(0, "shiny gold".to_string())).unwrap();
+    let (bag, _) = bags
+        .get_key_value(&Bag::new(0, "shiny gold".to_string()))
+        .unwrap();
 
     //dbg!(&bags);
 
@@ -161,16 +166,14 @@ fn part_two() {
     println!("total = {}", total);
 }
 
-
 fn main() {
     //part_one();
     part_two();
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::{parse_container_bag, parse_contained_bags};
+    use crate::{parse_contained_bags, parse_container_bag};
 
     #[test]
     fn can_parse_containing_bag_name() {

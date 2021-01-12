@@ -59,12 +59,12 @@ fn main() {
         })
         .collect();
 
-        seats.sort();
-        for i in 0..(seats.len() - 1) {
-            if seats[i] + 1 != seats[i+1] {
-                println!("missing seat {}", &seats[i] + 1);
-            }
+    seats.sort();
+    for i in 0..(seats.len() - 1) {
+        if seats[i] + 1 != seats[i + 1] {
+            println!("missing seat {}", &seats[i] + 1);
         }
+    }
 }
 
 #[cfg(test)]

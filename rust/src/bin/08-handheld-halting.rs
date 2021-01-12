@@ -3,8 +3,8 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::io;
 use std::fs::File;
+use std::io;
 use std::io::BufRead;
 
 #[derive(Debug, Copy, Clone)]
@@ -52,7 +52,7 @@ fn parse_input(filename: &str) -> Vec<Ins> {
     let file = File::open(filename).unwrap();
     io::BufReader::new(file)
         .lines()
-        .map(|l| l.unwrap() )
+        .map(|l| l.unwrap())
         .map(|line| {
             let caps = RE.captures(&line).expect("input should match RE pattern");
             let ins = &caps["ins"];
@@ -78,11 +78,11 @@ fn will_terminate(ins: &Vec<Ins>) -> (bool, i32, Vec<usize>) {
     loop {
         if cidx >= ins.len() {
             // program does terminate
-            return (true, acc, ins_hist)
+            return (true, acc, ins_hist);
         }
         if visited[cidx] == true {
             // program loops
-            return (false, acc, ins_hist)
+            return (false, acc, ins_hist);
         }
 
         visited[cidx] = true;
@@ -93,13 +93,13 @@ fn will_terminate(ins: &Vec<Ins>) -> (bool, i32, Vec<usize>) {
             Ins::ACC(amt) => {
                 acc += amt;
                 cidx += 1;
-            },
+            }
             Ins::JMP(amt) => {
                 cidx = (cidx as i32 + amt) as usize;
-            },
+            }
             Ins::NOP(_amt) => {
                 cidx += 1;
-            },
+            }
         }
     }
 }

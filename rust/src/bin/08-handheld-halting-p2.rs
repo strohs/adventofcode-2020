@@ -3,8 +3,8 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::io;
 use std::fs::File;
+use std::io;
 use std::io::BufRead;
 
 /// Ins represents all the possible Instructions for this challenge
@@ -51,7 +51,7 @@ fn parse_input(filename: &str) -> Vec<Ins> {
     let file = File::open(filename).unwrap();
     io::BufReader::new(file)
         .lines()
-        .map(|l| l.unwrap() )
+        .map(|l| l.unwrap())
         .map(|line| {
             let caps = RE.captures(&line).expect("input should match RE pattern");
             let ins = &caps["ins"];
@@ -65,7 +65,6 @@ fn parse_input(filename: &str) -> Vec<Ins> {
         .collect::<Vec<Ins>>()
 }
 
-
 /// returns a Vector of indices, of NOP and JMP statements that were executed before a loop occurred
 fn ins_indices(ins: &Vec<Ins>) -> Option<Vec<usize>> {
     let mut cidx = 0;
@@ -75,11 +74,11 @@ fn ins_indices(ins: &Vec<Ins>) -> Option<Vec<usize>> {
     loop {
         if cidx >= ins.len() {
             // program terminated
-            return None
+            return None;
         }
         if visited[cidx] == true {
             // program loops
-            return Some(ins_hist)
+            return Some(ins_hist);
         }
 
         visited[cidx] = true;
@@ -89,13 +88,13 @@ fn ins_indices(ins: &Vec<Ins>) -> Option<Vec<usize>> {
         match ins[cidx] {
             Ins::ACC(_amt) => {
                 cidx += 1;
-            },
+            }
             Ins::JMP(amt) => {
                 cidx = (cidx as i32 + amt) as usize;
-            },
+            }
             Ins::NOP(_amt) => {
                 cidx += 1;
-            },
+            }
         }
     }
 }
@@ -109,11 +108,11 @@ fn terminates(ins: &Vec<Ins>) -> Option<i32> {
     loop {
         if cidx >= ins.len() {
             // program terminates
-            return Some(acc)
+            return Some(acc);
         }
         if visited[cidx] == true {
             // program has a loop
-            return None
+            return None;
         }
 
         visited[cidx] = true;
@@ -121,13 +120,13 @@ fn terminates(ins: &Vec<Ins>) -> Option<i32> {
             Ins::ACC(amt) => {
                 acc += amt;
                 cidx += 1;
-            },
+            }
             Ins::JMP(amt) => {
                 cidx = (cidx as i32 + amt) as usize;
-            },
+            }
             Ins::NOP(_amt) => {
                 cidx += 1;
-            },
+            }
         }
     }
 }
@@ -142,7 +141,7 @@ fn part_two() {
         loop {
             if let Some(acc) = terminates(&ins) {
                 println!("final acc = {}", &acc);
-                break
+                break;
             }
             // else we need to: restore the last instruction that was swapped
             ins[last_idx] = last_ins;

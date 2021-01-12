@@ -1,11 +1,11 @@
 // Advent of Code - Day 11 - Seating System
 // https://adventofcode.com/2020/day/11
 
-use std::fmt::{Display, Formatter};
-use std::{fmt, io};
 use std::convert::TryFrom;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::BufRead;
+use std::{fmt, io};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Seat {
@@ -41,11 +41,11 @@ impl TryFrom<char> for Seat {
 struct SeatVec {
     seats: Vec<Seat>,
     col_len: usize,
+    row_len: usize,
 }
 
 impl Display for SeatVec {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-
         for (i, s) in self.seats.iter().enumerate() {
             if i > 0 && i % self.col_len == 0 {
                 write!(f, "\n")?;
@@ -58,39 +58,73 @@ impl Display for SeatVec {
 
 impl SeatVec {
     fn new(seats: Vec<Seat>, col_len: usize) -> Self {
+        let row_len = seats.len() / col_len;
         Self {
             seats,
             col_len,
+            row_len,
         }
     }
 
-    fn adjacent_indices(&self, i: usize) -> Vec<usize> {
-        let on_top_row = || i < self.col_len;
-        let on_bot_row = || i >= self.seats.len() - self.col_len && i < self.seats.len();
-        let on_lft_col = || i % self.col_len == 0;
-        let on_rgt_col = || i % self.col_len == self.col_len - 1;
+    // fn adjacent_indices(&self, i: usize) -> Vec<usize> {
+    //     let on_top_row = || i < self.col_len;
+    //     let on_bot_row = || i >= self.seats.len() - self.col_len && i < self.seats.len();
+    //     let on_lft_col = || i % self.col_len == 0;
+    //     let on_rgt_col = || i % self.col_len == self.col_len - 1;
+    //
+    //     let ul = || i - self.col_len - 1;
+    //     let up = || i - self.col_len;
+    //     let ur = || i - self.col_len + 1;
+    //     let lf = || i - 1;
+    //     let rg = || i + 1;
+    //     let dl = || i + self.col_len - 1;
+    //     let dn = || i + self.col_len;
+    //     let dr = || i + self.col_len + 1;
+    //
+    //     let adjs = match i {
+    //         _i if on_top_row() && on_lft_col() => vec![rg(), dn(), dr()],
+    //         _i if on_top_row() && on_rgt_col() => vec![dn(), dl(), lf()],
+    //         _i if on_top_row() => vec![rg(), dr(), dn(), dl(), lf()],
+    //         _i if on_bot_row() && on_lft_col() => vec![up(), ur(), rg()],
+    //         _i if on_bot_row() && on_rgt_col() => vec![lf(), ul(), up()],
+    //         _i if on_bot_row() => vec![up(), ur(), rg(), lf(), ul()],
+    //         _i if on_lft_col() => vec![up(), ur(), rg(), dr(), dn()],
+    //         _i if on_rgt_col() => vec![dn(), dl(), lf(), ul(), up()],
+    //         _ => vec![up(), ur(), rg(), dr(), dn(), dl(), lf(), ul()],
+    //     };
+    //     adjs
+    // }
 
-        let ul = || i - self.col_len - 1;
-        let up = || i - self.col_len;
-        let ur = || i - self.col_len + 1;
-        let lf = || i - 1;
-        let rg = || i + 1;
-        let dl = || i + self.col_len - 1;
-        let dn = || i + self.col_len;
-        let dr = || i + self.col_len + 1;
-
-        let adjs = match i {
-            _i if on_top_row() && on_lft_col() => vec![rg(), dn(), dr()],
-            _i if on_top_row() && on_rgt_col() => vec![dn(), dl(), lf()],
-            _i if on_top_row() => vec![rg(), dr(), dn(), dl(), lf()],
-            _i if on_bot_row() && on_lft_col() => vec![up(), ur(), rg()],
-            _i if on_bot_row() && on_rgt_col() => vec![lf(), ul(), up()],
-            _i if on_bot_row() => vec![up(), ur(), rg(), lf(), ul()],
-            _i if on_lft_col() => vec![up(), ur(), rg(), dr(), dn()],
-            _i if on_rgt_col() => vec![dn(), dl(), lf(), ul(), up()],
-            _ => vec![up(), ur(), rg(), dr(), dn(), dl(), lf(), ul()],
+    fn adjacent_indices(&self, idx: usize) -> Vec<usize> {
+        let row = |i: i32| i / self.col_len as i32;
+        let col = |i: i32| i % self.col_len as i32;
+        // index converts a 2d index to 1d
+        let index = |r: usize, c: usize| r * self.col_len + c;
+        let to_1d = |r: i32, c: i32| {
+            if r >= 0 && (r as usize) < self.row_len && c >= 0 && (c as usize) < self.col_len {
+                Some(index(r as usize, c as usize))
+            } else {
+                None
+            }
         };
-        adjs
+        let deltas = [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ];
+
+        deltas
+            .iter()
+            .map(|(row_delta, col_delta)| {
+                (row(idx as i32) + row_delta, col(idx as i32) + col_delta)
+            })
+            .filter_map(|(row_idx, col_idx)| to_1d(row_idx, col_idx))
+            .collect()
     }
 
     /// returns the index of the first occupied seat in `idxs`. If an empty seat is encountered
@@ -113,7 +147,7 @@ impl SeatVec {
         let start = idx % self.col_len;
         let end = idx;
 
-        let idxs: Vec<usize> =  (start..end).step_by(self.col_len).rev().collect();
+        let idxs: Vec<usize> = (start..end).step_by(self.col_len).rev().collect();
         self.visible_occupied_seat(idxs)
     }
 
@@ -128,7 +162,7 @@ impl SeatVec {
     }
 
     /// returns index of first occupied seat that can be seen from `idx` looking to the right
-    fn occupied_seat_right(&self, idx:usize) -> Option<usize> {
+    fn occupied_seat_right(&self, idx: usize) -> Option<usize> {
         let start = idx + 1;
         let end = idx + (self.col_len - (idx % self.col_len));
 
@@ -137,7 +171,7 @@ impl SeatVec {
     }
 
     /// returns index of first occupied seat that can be seen from `idx` looking to the left
-    fn occupied_seat_left(&self, idx:usize) -> Option<usize> {
+    fn occupied_seat_left(&self, idx: usize) -> Option<usize> {
         let start = idx - (idx % self.col_len);
         let end = idx;
 
@@ -156,7 +190,7 @@ impl SeatVec {
             let mut idxs = vec![];
             let mut idx = idx;
             // while we haven't gone past the top row or right edge of the matrix
-            while !on_top_edge(idx) && !on_right_edge(idx)  {
+            while !on_top_edge(idx) && !on_right_edge(idx) {
                 idx = idx - self.col_len + 1;
                 idxs.push(idx);
             }
@@ -176,7 +210,7 @@ impl SeatVec {
             let mut idxs = vec![];
             let mut idx = idx;
             // while we haven't gone past the top row or left edge of the seats matrix
-            while !on_top_edge(idx) && !on_left_edge(idx)  {
+            while !on_top_edge(idx) && !on_left_edge(idx) {
                 idx = idx - self.col_len - 1;
                 idxs.push(idx);
             }
@@ -201,7 +235,7 @@ impl SeatVec {
                 idxs.push(idx);
 
                 if on_bottom_edge(idx) || on_left_edge(idx) {
-                    break
+                    break;
                 }
             }
 
@@ -225,7 +259,7 @@ impl SeatVec {
                 idxs.push(idx);
 
                 if on_bottom_edge(idx) || on_right_edge(idx) {
-                    break
+                    break;
                 }
             }
 
@@ -233,8 +267,7 @@ impl SeatVec {
         }
     }
 
-
-    /// returns the total number of seats, (adjacent to the seat at idx), that are occupied
+    /// returns the total number of occupied seats, that are adjacent to the seat at idx
     fn adjacent_occupied_count(&self, idx: usize) -> usize {
         self.adjacent_indices(idx)
             .iter()
@@ -252,11 +285,11 @@ impl SeatVec {
             self.occupied_seat_right(idx),
             self.occupied_seat_down_right(idx),
             self.occupied_seat_down(idx),
-            self.occupied_seat_down_left(idx)
+            self.occupied_seat_down_left(idx),
         ]
-            .iter()
-            .filter(|&&vs| vs.is_some())
-            .count()
+        .iter()
+        .filter(|&&vs| vs.is_some())
+        .count()
     }
 
     /// returns total number of seats that are occupied
@@ -279,17 +312,13 @@ impl SeatVec {
 
 /// parse input into a SeatVec Struct
 fn parse_input(filename: &str) -> SeatVec {
-
     let file = File::open(filename).unwrap();
     let mut col_len = 0_usize;
 
     let mut seats = vec![];
     for (idx, line) in io::BufReader::new(file).lines().enumerate() {
         let line = line.expect("input is valid");
-        let mut seat_line: Vec<Seat> = line
-            .chars()
-            .map(|c| Seat::try_from(c).unwrap())
-            .collect();
+        let mut seat_line: Vec<Seat> = line.chars().map(|c| Seat::try_from(c).unwrap()).collect();
         if idx == 0 {
             col_len = seat_line.len();
         }
@@ -315,11 +344,11 @@ fn part_one() {
                 Some(Seat::Empty) if sv.adjacent_occupied_count(idx) == 0 => {
                     ts[idx] = Seat::Occupied;
                     changed = true;
-                },
+                }
                 Some(Seat::Occupied) if sv.adjacent_occupied_count(idx) >= 4 => {
                     ts[idx] = Seat::Empty;
                     changed = true;
-                },
+                }
                 _ => ts[idx] = sv.seats[idx],
             }
         }
@@ -329,7 +358,10 @@ fn part_one() {
     }
 
     println!("{}", &sv);
-    println!("part one final occupied seat count {}", &sv.occupied_seat_count());
+    println!(
+        "part one final occupied seat count {}",
+        &sv.occupied_seat_count()
+    );
 }
 
 #[allow(dead_code)]
@@ -348,11 +380,11 @@ fn part_two() {
                 Some(Seat::Empty) if sv.visible_occupied_count(idx) == 0 => {
                     ts[idx] = Seat::Occupied;
                     changed = true;
-                },
+                }
                 Some(Seat::Occupied) if sv.visible_occupied_count(idx) >= 5 => {
                     ts[idx] = Seat::Empty;
                     changed = true;
-                },
+                }
                 _ => ts[idx] = sv.seats[idx],
             }
         }
@@ -362,7 +394,10 @@ fn part_two() {
     }
 
     println!("{}", &sv);
-    println!("part two final occupied seat count {}", &sv.occupied_seat_count());
+    println!(
+        "part two final occupied seat count {}",
+        &sv.occupied_seat_count()
+    );
 }
 
 fn main() {
@@ -370,28 +405,29 @@ fn main() {
     part_two()
 }
 
-
-
-
-
-
-
-
-
-
 #[cfg(test)]
 mod tests {
-    use crate::{Seat, SeatVec, parse_input};
+    use crate::{parse_input, Seat, SeatVec};
 
     #[test]
     fn get_upper_left_adjacents_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(0);
+        dbg!(&ul);
         assert_eq!(ul.len(), 3);
         assert!(ul.contains(&1));
         assert!(ul.contains(&4));
@@ -402,9 +438,18 @@ mod tests {
     #[test]
     fn get_upper_right_adjacents_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(3);
@@ -418,9 +463,18 @@ mod tests {
     #[test]
     fn get_top_row_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(1);
@@ -436,9 +490,18 @@ mod tests {
     #[test]
     fn get_middle_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(5);
@@ -457,9 +520,18 @@ mod tests {
     #[test]
     fn get_left_col_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(4);
@@ -471,9 +543,18 @@ mod tests {
     #[test]
     fn get_right_col_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(7);
@@ -485,9 +566,18 @@ mod tests {
     #[test]
     fn get_bottom_row_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(9);
@@ -503,9 +593,18 @@ mod tests {
     #[test]
     fn get_bottom_left_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(8);
@@ -519,9 +618,18 @@ mod tests {
     #[test]
     fn get_bottom_right_adjacent_indices() {
         let v = vec![
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
-            Seat::Floor,Seat::Floor,Seat::Floor,Seat::Floor,
-            Seat::Empty,Seat::Empty,Seat::Empty,Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Floor,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
+            Seat::Empty,
         ];
         let sv = SeatVec::new(v, 4);
         let ul = sv.adjacent_indices(11);
@@ -538,5 +646,4 @@ mod tests {
     //     let empty_seats = sv.empty_seat_up_right(90);
     //     dbg!(&empty_seats);
     // }
-
 }
