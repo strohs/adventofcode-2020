@@ -81,6 +81,7 @@ fn parse_contained_bags(line: &str) -> Option<Vec<Bag>> {
 }
 
 // compute count of unique bag colors can eventually contain at least one shiny gold bag
+#[allow(dead_code)]
 fn part_one() {
     // a HashMap that maps a contained bag name, to a set of bags that contain them
     let mut bag_map: HashMap<String, HashSet<Bag>> = HashMap::new();

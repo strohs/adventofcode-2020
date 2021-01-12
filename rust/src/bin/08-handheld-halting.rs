@@ -25,11 +25,12 @@ impl Ins {
     }
 
     /// swaps a NOP to a JMP and a JMP to a NOP. ACC returns itself
+    #[allow(dead_code)]
     fn swap(ins: &Ins) -> Self {
         match ins {
             Ins::NOP(amt) => Ins::JMP(*amt),
             Ins::JMP(amt) => Ins::NOP(*amt),
-            Ins::ACC(amt) => *ins,
+            Ins::ACC(_amt) => *ins,
         }
     }
 
