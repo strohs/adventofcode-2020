@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/python/python.iml" filepath="$PROJECT_DIR$/python/python.iml" />
       <module fileurl="file://$PROJECT_DIR$/rust/rust.iml" filepath="$PROJECT_DIR$/rust/rust.iml" />
+      <module fileurl="file://$PROJECT_DIR$/typescript/typescript.iml" filepath="$PROJECT_DIR$/typescript/typescript.iml" />
     </modules>
   </component>
 </project>
